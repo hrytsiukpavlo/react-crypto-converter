@@ -4,19 +4,28 @@ import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
-import { styled } from "@mui/material/styles";
 import Paper from "@mui/material/Paper";
 import axios from "axios";
 
 export default function CurrencySelector() {
-	const [ageFirst, setAgeFirst] = React.useState("");
-	const [ageSecond, setAgeSecond] = React.useState("");
+	const [firstCurrency, setFirstCurrency] = React.useState("");
+	const [firstValue, setFirstValue] = React.useState("");
+	const [secondCurrency, setSecondCurrency] = React.useState("");
+	const [secondValue, setSecondValue] = React.useState("");
 	const [allCurrencies, setAllCurrencies] = React.useState([]);
 
 	React.useEffect(() => {
 		axios
 			.get("https://min-api.cryptocompare.com/data/top/totalvolfull?=limit=10&tsym=USD")
 			.then(({ data }) => {
+				let res;
+				data.Data.map((el) => {
+					if (el.CoinInfo.Name === firstCurrency) {
+						res = el.RAW.USD.PRICE;
+					}
+					return res;
+				});
+				setSecondValue((res * firstValue).toFixed(2));
 				const coins = data.Data.map((coin) => {
 					const obj = {
 						name: coin.CoinInfo.Name,
@@ -34,29 +43,30 @@ export default function CurrencySelector() {
 				});
 				setAllCurrencies(coins);
 			});
-	}, []);
-
-	const Item = styled(Paper)(({ theme }) => ({
-		backgroundColor: theme.palette.mode === "dark" ? "#1A2027" : "#fff",
-		...theme.typography.body2,
-		padding: theme.spacing(1),
-		textAlign: "center",
-		color: theme.palette.text.secondary,
-	}));
+	}, [firstCurrency, secondCurrency, firstValue]);
 
 	const handleChangeFirst = (event) => {
-		setAgeFirst(event.target.value);
+		setFirstCurrency(event.target.value);
 	};
 
 	const handleChangeSecond = (event) => {
-		setAgeSecond(event.target.value);
+		setSecondCurrency(event.target.value);
 	};
 
 	return (
 		<>
-			<Item elevation={2}>
+			<Paper
+				elevation={2}
+				sx={{
+					padding: "40px",
+				}}
+			>
 				<div className="inputDiv">
 					<TextField
+						onChange={(e) => {
+							setFirstValue(e.target.value);
+						}}
+						value={firstValue}
 						label="Amount"
 						variant="outlined"
 						sx={{
@@ -67,7 +77,7 @@ export default function CurrencySelector() {
 					<FormControl fullWidth>
 						<InputLabel id="firstCurrency">Currency</InputLabel>
 						<Select
-							value={ageFirst}
+							value={firstCurrency}
 							label="firstCurrency"
 							onChange={handleChangeFirst}
 							sx={{
@@ -75,13 +85,18 @@ export default function CurrencySelector() {
 							}}
 						>
 							{allCurrencies.map((el) => {
-								return <MenuItem value={el}>{el}</MenuItem>;
+								return (
+									<MenuItem key={el} value={el}>
+										{el}
+									</MenuItem>
+								);
 							})}
 						</Select>
 					</FormControl>
 				</div>
 				<div className="inputDiv">
 					<TextField
+						value={secondValue && firstValue ? secondValue : ""}
 						label="Amount"
 						variant="outlined"
 						sx={{
@@ -92,20 +107,25 @@ export default function CurrencySelector() {
 					<FormControl fullWidth>
 						<InputLabel id="secondCurrency">Currency</InputLabel>
 						<Select
-							value={ageSecond}
+							// value={secondCurrency}
+							value="USDT"
 							label="secondCurrency"
-							onChange={handleChangeSecond}
+							// onChange={handleChangeSecond}
 							sx={{
 								width: "110px",
 							}}
 						>
 							{allCurrencies.map((el) => {
-								return <MenuItem value={el}>{el}</MenuItem>;
+								return (
+									<MenuItem key={el} value={el}>
+										{el}
+									</MenuItem>
+								);
 							})}
 						</Select>
 					</FormControl>
 				</div>
-			</Item>
+			</Paper>
 		</>
 	);
 }
