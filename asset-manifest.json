@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/hrytsiukpavlo/react-crypto-converter/static/css/main.ac7facc6.css",
+    "main.js": "/hrytsiukpavlo/react-crypto-converter/static/js/main.28752be1.js",
+    "index.html": "/hrytsiukpavlo/react-crypto-converter/index.html",
+    "main.ac7facc6.css.map": "/hrytsiukpavlo/react-crypto-converter/static/css/main.ac7facc6.css.map",
+    "main.28752be1.js.map": "/hrytsiukpavlo/react-crypto-converter/static/js/main.28752be1.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.ac7facc6.css",
+    "static/js/main.28752be1.js"
+  ]
+}
