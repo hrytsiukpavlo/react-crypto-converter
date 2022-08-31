@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import TextField from "@mui/material/TextField";
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
@@ -8,42 +8,67 @@ import Paper from "@mui/material/Paper";
 import axios from "axios";
 
 export default function CurrencySelector() {
-	const [firstCurrency, setFirstCurrency] = React.useState("");
-	const [firstValue, setFirstValue] = React.useState("");
-	const [secondCurrency, setSecondCurrency] = React.useState("");
-	const [secondValue, setSecondValue] = React.useState("");
-	const [allCurrencies, setAllCurrencies] = React.useState([]);
+	const [firstCurrency, setFirstCurrency] = useState("");
+	const [firstValue, setFirstValue] = useState("");
+	const [secondCurrency, setSecondCurrency] = useState("");
+	const [secondValue, setSecondValue] = useState("");
 
-	React.useEffect(() => {
+	const [fromFirst, setFromFirst] = useState(false);
+
+	const [coins, setCoins] = useState([]);
+
+	useEffect(() => {
 		axios
 			.get("https://min-api.cryptocompare.com/data/top/totalvolfull?=limit=10&tsym=USD")
 			.then(({ data }) => {
-				let res;
-				data.Data.map((el) => {
-					if (el.CoinInfo.Name === firstCurrency) {
-						res = el.RAW.USD.PRICE;
-					}
-					return res;
-				});
-				setSecondValue((res * firstValue).toFixed(2));
-				const coins = data.Data.map((coin) => {
-					const obj = {
+				const result = data.Data.map((coin) => {
+					return {
 						name: coin.CoinInfo.Name,
-						fullName: coin.CoinInfo.FullName,
-						imageUrl: `https://www.cryptocompare.com/${coin.CoinInfo.ImageUrl}`,
 						price:
 							coin.RAW.USD.PRICE >= 1
 								? coin.RAW.USD.PRICE.toFixed(0)
 								: coin.RAW.USD.PRICE.toFixed(2),
-						marketCap: parseInt(coin.RAW.USD.MKTCAP)
-							.toString()
-							.replace(/\B(?=(\d{3})+(?!\d))/g, ","),
 					};
-					return obj.name;
 				});
-				setAllCurrencies(coins);
+				setCoins(result);
+				if (result.length) {
+					setFirstCurrency(result[0].name);
+					setSecondCurrency(result[0].name);
+				}
+			})
+			.catch((e) => {
+				console.log(e);
 			});
-	}, [firstCurrency, secondCurrency, firstValue]);
+	}, []);
+
+	useEffect(() => {
+		if (firstCurrency && fromFirst) {
+			if (secondCurrency) {
+				const firstCoinPrice = coins.find((coin) => coin.name === firstCurrency)?.price;
+				const secondCoinPrice = coins.find((coin) => coin.name === secondCurrency)?.price;
+				setSecondValue(
+					((Number(firstCoinPrice) * Number(firstValue)) / Number(secondCoinPrice)).toFixed(2)
+				);
+			} else {
+				const res = coins.find((coin) => coin.name === firstCurrency)?.price;
+				setSecondValue((Number(res) * Number(firstValue)).toFixed(2));
+			}
+		}
+	}, [firstValue, coins, firstCurrency, secondCurrency, fromFirst]);
+
+	useEffect(() => {
+		if (secondCurrency && !fromFirst) {
+			if (firstCurrency) {
+				const firstCoinPrice = coins.find((coin) => coin.name === secondCurrency)?.price;
+				const secondCoinPrice = coins.find((coin) => coin.name === firstCurrency)?.price;
+
+				setFirstValue(((firstCoinPrice / secondCoinPrice) * Number(secondValue)).toFixed(2));
+			} else {
+				const res = coins.find((coin) => coin.name === secondCurrency)?.price;
+				setFirstValue((Number(res) * Number(secondValue)).toFixed(2));
+			}
+		}
+	}, [secondValue, coins, secondCurrency, firstCurrency, fromFirst]);
 
 	const handleChangeFirst = (event) => {
 		setFirstCurrency(event.target.value);
@@ -64,6 +89,7 @@ export default function CurrencySelector() {
 				<div className="inputDiv">
 					<TextField
 						onChange={(e) => {
+							setFromFirst(true);
 							setFirstValue(e.target.value);
 						}}
 						value={firstValue}
@@ -84,10 +110,10 @@ export default function CurrencySelector() {
 								width: "110px",
 							}}
 						>
-							{allCurrencies.map((el) => {
+							{coins.map((el) => {
 								return (
-									<MenuItem key={el} value={el}>
-										{el}
+									<MenuItem key={el.name} value={el.name}>
+										{el.name}
 									</MenuItem>
 								);
 							})}
@@ -96,29 +122,33 @@ export default function CurrencySelector() {
 				</div>
 				<div className="inputDiv">
 					<TextField
-						value={secondValue && firstValue ? secondValue : ""}
+						value={secondValue && firstValue ? secondValue : "0.00"}
 						label="Amount"
 						variant="outlined"
 						sx={{
 							width: "500px",
 							marginRight: "10px",
 						}}
+						onChange={(e) => {
+							setFromFirst(false);
+							setSecondValue(e.target.value);
+						}}
 					/>
 					<FormControl fullWidth>
 						<InputLabel id="secondCurrency">Currency</InputLabel>
 						<Select
 							// value={secondCurrency}
-							value="USDT"
+							value={secondCurrency}
 							label="secondCurrency"
-							// onChange={handleChangeSecond}
+							onChange={handleChangeSecond}
 							sx={{
 								width: "110px",
 							}}
 						>
-							{allCurrencies.map((el) => {
+							{coins.map((el) => {
 								return (
-									<MenuItem key={el} value={el}>
-										{el}
+									<MenuItem key={el.name} value={el.name}>
+										{el.name}
 									</MenuItem>
 								);
 							})}

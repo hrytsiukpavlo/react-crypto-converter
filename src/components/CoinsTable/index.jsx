@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
@@ -7,11 +7,13 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Paper from "@mui/material/Paper";
+import classnames from "classnames";
 
 export default function CoinsTable() {
 	const [allCoins, setAllCoins] = useState([]);
+	const prevCoins = useRef();
 
-	useEffect(() => {
+	const getCoins = useCallback(() => {
 		axios
 			.get("https://min-api.cryptocompare.com/data/top/totalvolfull?=limit=10&tsym=USD")
 			.then(({ data }) => {
@@ -33,6 +35,19 @@ export default function CoinsTable() {
 				setAllCoins(coins);
 			});
 	}, []);
+
+	useEffect(() => {
+		prevCoins.current = allCoins;
+	}, [allCoins]);
+
+	useEffect(() => {
+		getCoins();
+		let timerId = setInterval(getCoins, 2000);
+		return () => {
+			clearInterval(timerId);
+		};
+	}, [getCoins]);
+
 	return (
 		<>
 			<TableContainer component={Paper}>
@@ -47,7 +62,7 @@ export default function CoinsTable() {
 						</TableRow>
 					</TableHead>
 					<TableBody>
-						{allCoins.map((coin) => (
+						{allCoins.map((coin, index) => (
 							<TableRow key={coin.name} sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
 								<TableCell
 									component="th"
@@ -68,7 +83,19 @@ export default function CoinsTable() {
 								</TableCell>
 								<TableCell align="center">{coin.name}</TableCell>
 								<TableCell align="center">{coin.fullName}</TableCell>
-								<TableCell align="center">${coin.price}</TableCell>
+								<TableCell
+									className={classnames({
+										red: prevCoins.current.length && coin.price < prevCoins.current[index].price,
+										green: prevCoins.current.length && coin.price > prevCoins.current[index].price,
+										// red: true,
+										// green: true,
+										usual:
+											prevCoins.current.length && coin.price === prevCoins.current[index].price,
+									})}
+									align="center"
+								>
+									${coin.price}
+								</TableCell>
 								<TableCell align="center">${coin.marketCap}</TableCell>
 							</TableRow>
 						))}

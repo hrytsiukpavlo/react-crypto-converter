@@ -20,3 +20,20 @@ code {
   justify-content: center;
   margin-bottom: 20px;
 }
+
+.red {
+  background-color:rgba(220, 20, 60, 0.8) !important;
+  color: #fff !important;
+  transition: background-color 0.2s ease-in-out !important;
+}
+
+.green {
+  background-color:rgba(0, 128, 0, 0.5) !important;
+  color: #fff !important;
+  transition: background-color 0.2s ease-in-out !important;
+}
+
+.usual {
+  background-color:rgba(255, 255, 255, 1) !important;
+  transition: background-color 0.2s ease-in-out !important;
+}
